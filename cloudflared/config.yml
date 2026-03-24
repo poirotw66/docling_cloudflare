@@ -1,0 +1,8 @@
+tunnel: e1c7b76a-f140-47c7-b92e-e8f16a2bc068
+origincert: /root/.cloudflared/cert.pem
+credentials-file: /root/.cloudflared/e1c7b76a-f140-47c7-b92e-e8f16a2bc068.json
+
+ingress:
+  - hostname: docling.itr-lab.cloud
+    service: http://gateway:8080
+  - service: http_status:404

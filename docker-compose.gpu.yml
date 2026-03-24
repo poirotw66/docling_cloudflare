@@ -1,0 +1,14 @@
+services:
+  docling-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    environment:
+      DOCLING_GPU_ENABLED: ${DOCLING_GPU_ENABLED:-true}
+      DOCLING_NUM_THREADS: ${DOCLING_NUM_THREADS:-8}
+      DOCLING_OCR_BATCH_SIZE: ${DOCLING_OCR_BATCH_SIZE:-8}
+      DOCLING_LAYOUT_BATCH_SIZE: ${DOCLING_LAYOUT_BATCH_SIZE:-32}
+      DOCLING_TABLE_BATCH_SIZE: ${DOCLING_TABLE_BATCH_SIZE:-4}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+    gpus: all

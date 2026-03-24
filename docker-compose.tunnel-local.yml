@@ -1,0 +1,7 @@
+services:
+  cloudflared:
+    user: "0:0"
+    volumes:
+      - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
+      - /home/justin/.cloudflared:/root/.cloudflared:ro
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
