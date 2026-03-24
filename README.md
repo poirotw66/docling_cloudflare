@@ -38,7 +38,14 @@ By default, the API returns JSON:
 }
 ```
 
-If you want the API to return a downloadable Markdown file instead, add `response_format=file` either as a query parameter, a multipart form field, or a JSON field.
+By default, JSON mode now embeds images directly into the Markdown as base64 `data:image/...` URIs.
+
+If you want a downloadable package instead, set `response_format=zip`. The API will return a ZIP archive containing:
+
+1. One Markdown file
+2. An `images/` directory with extracted `.jpg` images
+
+The Markdown inside the ZIP references those local image files.
 
 #### Option 1: Provide a PDF URL
 
@@ -74,13 +81,13 @@ Default response format:
 }
 ```
 
-Download a Markdown file instead:
+Download a ZIP package instead:
 
 ```bash
-curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=file" \
+curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=zip" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf" \
-  -o paper.md
+  -o paper.zip
 ```
 
 ## Local Deployment
@@ -561,16 +568,17 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
 ```bash
 curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -H "Authorization: Bearer <your-api-key>" \
-  -F "file=@./paper.pdf"
+  -F "file=@./paper.pdf" \
+  | jq -r '.markdown' > paper.md
 ```
 
-### curl: Download the Markdown File Directly
+### curl: Download the ZIP Package
 
 ```bash
-curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=file" \
+curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=zip" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf" \
-  -o paper.md
+  -o paper.zip
 ```
 
 ### Python: Send a PDF URL

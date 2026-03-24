@@ -38,7 +38,14 @@ Client
 }
 ```
 
-如果你希望 API 直接回傳可下載的 Markdown 檔案，可以加上 `response_format=file`，這個參數可以放在 query parameter、multipart form 欄位，或 JSON 欄位中。
+現在 JSON 模式預設會把圖片直接以 base64 `data:image/...` 的形式內嵌在 Markdown 裡。
+
+如果你希望下載打包好的檔案，請改用 `response_format=zip`。API 會回傳一個 ZIP，內容包含：
+
+1. 一個 Markdown 檔
+2. 一個 `images/` 目錄，裡面是抽出的 `.jpg` 圖片
+
+ZIP 裡的 Markdown 會直接引用這些本地圖片檔。
 
 #### 方式 1：提供 PDF URL
 
@@ -74,13 +81,13 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
 }
 ```
 
-如果要直接下載 Markdown 檔案：
+如果要直接下載 ZIP 檔案：
 
 ```bash
-curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=file" \
+curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=zip" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf" \
-  -o paper.md
+  -o paper.zip
 ```
 
 ## 本地部署
@@ -561,16 +568,17 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
 ```bash
 curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -H "Authorization: Bearer <your-api-key>" \
-  -F "file=@./paper.pdf"
+  -F "file=@./paper.pdf" \
+  | jq -r '.markdown' > paper.md
 ```
 
-### curl：直接下載 Markdown 檔案
+### curl：直接下載 ZIP 檔案
 
 ```bash
-curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=file" \
+curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=zip" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf" \
-  -o paper.md
+  -o paper.zip
 ```
 
 ### Python：傳入 PDF URL
