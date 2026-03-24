@@ -4,6 +4,7 @@ import os
 import tempfile
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 from docling.datamodel.base_models import InputFormat
@@ -13,6 +14,7 @@ from docling.document_converter import PdfFormatOption
 from docling.pipeline.threaded_standard_pdf_pipeline import ThreadedStandardPdfPipeline
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, Response
 
 
 app = FastAPI(
@@ -106,6 +108,27 @@ def convert_source(source: str) -> str:
     return result.document.export_to_markdown()
 
 
+def build_markdown_filename(filename: str) -> str:
+    source_path = Path(filename)
+    stem = source_path.stem or "document"
+    return f"{stem}.md"
+
+
+def parse_response_format(value: str | None) -> Literal["json", "file"]:
+    normalized = (value or "json").strip().lower()
+
+    if normalized in {"json", "inline"}:
+        return "json"
+
+    if normalized in {"file", "download", "attachment", "markdown-file"}:
+        return "file"
+
+    raise HTTPException(
+        status_code=400,
+        detail="response_format must be one of: json, file"
+    )
+
+
 async def save_upload(upload: UploadFile) -> str:
     suffix = Path(upload.filename or "upload.pdf").suffix or ".pdf"
 
@@ -159,8 +182,9 @@ def health() -> dict[str, str]:
 async def convert(
     request: Request,
     file: UploadFile | None = File(default=None),
-    source_url: str | None = Form(default=None)
-) -> dict[str, str]:
+    source_url: str | None = Form(default=None),
+    response_format: str | None = Form(default=None)
+) -> Response:
     require_api_key(request)
 
     content_type = request.headers.get("content-type", "")
@@ -168,6 +192,11 @@ async def convert(
     if content_type.startswith("application/json"):
         payload = await request.json()
         source_url = payload.get("source_url")
+        response_format = payload.get("response_format")
+
+    output_format = parse_response_format(
+        response_format or request.query_params.get("response_format")
+    )
 
     if not file and not source_url:
         raise HTTPException(
@@ -188,10 +217,23 @@ async def convert(
 
         markdown = convert_source(source)
 
-        return {
-            "filename": filename,
-            "markdown": markdown
-        }
+        if output_format == "file":
+            markdown_filename = build_markdown_filename(filename)
+            headers = {
+                "Content-Disposition": f'attachment; filename="{markdown_filename}"'
+            }
+            return Response(
+                content=markdown,
+                media_type="text/markdown; charset=utf-8",
+                headers=headers,
+            )
+
+        return JSONResponse(
+            content={
+                "filename": filename,
+                "markdown": markdown,
+            }
+        )
     except HTTPException:
         raise
     except Exception as error:

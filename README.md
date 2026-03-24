@@ -29,6 +29,17 @@ Checks whether the container service is available.
 
 Two request styles are supported.
 
+By default, the API returns JSON:
+
+```json
+{
+  "filename": "paper.pdf",
+  "markdown": "# ..."
+}
+```
+
+If you want the API to return a downloadable Markdown file instead, add `response_format=file` either as a query parameter, a multipart form field, or a JSON field.
+
 #### Option 1: Provide a PDF URL
 
 Headers:
@@ -54,13 +65,22 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -F "file=@./Beyond RAG for Agent Memory- Retrieval by Decoupling and Aggregation.pdf"
 ```
 
-Response format:
+Default response format:
 
 ```json
 {
   "filename": "paper.pdf",
   "markdown": "# ..."
 }
+```
+
+Download a Markdown file instead:
+
+```bash
+curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=file" \
+  -H "Authorization: Bearer <your-api-key>" \
+  -F "file=@./paper.pdf" \
+  -o paper.md
 ```
 
 ## Local Deployment
@@ -542,6 +562,15 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
 curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf"
+```
+
+### curl: Download the Markdown File Directly
+
+```bash
+curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=file" \
+  -H "Authorization: Bearer <your-api-key>" \
+  -F "file=@./paper.pdf" \
+  -o paper.md
 ```
 
 ### Python: Send a PDF URL

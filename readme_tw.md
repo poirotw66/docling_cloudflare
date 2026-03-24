@@ -29,6 +29,17 @@ Client
 
 支援兩種請求方式。
 
+預設情況下，API 會回傳 JSON：
+
+```json
+{
+  "filename": "paper.pdf",
+  "markdown": "# ..."
+}
+```
+
+如果你希望 API 直接回傳可下載的 Markdown 檔案，可以加上 `response_format=file`，這個參數可以放在 query parameter、multipart form 欄位，或 JSON 欄位中。
+
 #### 方式 1：提供 PDF URL
 
 請求標頭：
@@ -54,13 +65,22 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -F "file=@./Beyond RAG for Agent Memory- Retrieval by Decoupling and Aggregation.pdf"
 ```
 
-回傳格式：
+預設回傳格式：
 
 ```json
 {
   "filename": "paper.pdf",
   "markdown": "# ..."
 }
+```
+
+如果要直接下載 Markdown 檔案：
+
+```bash
+curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=file" \
+  -H "Authorization: Bearer <your-api-key>" \
+  -F "file=@./paper.pdf" \
+  -o paper.md
 ```
 
 ## 本地部署
@@ -542,6 +562,15 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
 curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf"
+```
+
+### curl：直接下載 Markdown 檔案
+
+```bash
+curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=file" \
+  -H "Authorization: Bearer <your-api-key>" \
+  -F "file=@./paper.pdf" \
+  -o paper.md
 ```
 
 ### Python：傳入 PDF URL
