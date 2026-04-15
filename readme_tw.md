@@ -72,6 +72,13 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -F "file=@./Beyond RAG for Agent Memory- Retrieval by Decoupling and Aggregation.pdf"
 ```
 
+如果你呼叫的是本地 gateway，而且 `.env` 裡的 `API_KEYS=` 是空的，就可以省略授權標頭：
+
+```bash
+curl -X POST "http://127.0.0.1:18080/v1/convert" \
+  -F "file=@./Beyond RAG for Agent Memory- Retrieval by Decoupling and Aggregation.pdf"
+```
+
 預設回傳格式：
 
 ```json
@@ -88,6 +95,27 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=zip" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf" \
   -o paper.zip
+```
+
+如果你想把回傳的 Markdown 直接寫成檔案，建議先把完整 JSON 存成暫存檔，再用 `jq` 抽出 `.markdown`。這樣就算請求中途被中斷，也不會把目標檔案留成空檔：
+
+```bash
+curl -fsS -X POST "http://127.0.0.1:18080/v1/convert" \
+  -F "file=@/home/justin/docling_file/input/2604.pdf" \
+  -o /tmp/2604_response.json
+
+jq -er '.markdown' /tmp/2604_response.json \
+  > /home/justin/docling_file/input/2604.md
+```
+
+如果檔案本來就在掛載的 `input/` 目錄裡，你也可以不直接上傳檔案內容，而是傳宿主機路徑：
+
+```bash
+curl -fsS -X POST "http://127.0.0.1:18080/v1/convert" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_url": "/home/justin/docling_file/input/2604.pdf"
+  }'
 ```
 
 ## 本地部署
@@ -566,10 +594,12 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
 ### curl：上傳本地 PDF
 
 ```bash
-curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
+curl -fsS -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf" \
-  | jq -r '.markdown' > paper.md
+  -o /tmp/paper_response.json
+
+jq -er '.markdown' /tmp/paper_response.json > paper.md
 ```
 
 ### curl：直接下載 ZIP 檔案
@@ -689,7 +719,9 @@ print("saved:", "paper.md")
 
 - `container/app/main.py`：FastAPI + Docling 轉換邏輯
 - `Dockerfile`：本地 Docling 服務映像檔
-- `docker-compose.local.yml`：本地 API、Nginx、cloudflared 編排
+- `Dockerfile.gpu`：啟用 GPU 的 Docling 服務映像檔
+- `docker-compose.local.yml`：本地 API、Nginx，以及 token 模式 `cloudflared` profile 的編排
+- `docker-compose.gpu.yml`：Docling API 容器的 GPU override 設定
 - `deploy/nginx/default.conf`：本地反向代理設定
 - `cloudflared/config.yml.example`：命名 tunnel 的設定範例
 - `.env.example`：本地執行所需的環境變數範本

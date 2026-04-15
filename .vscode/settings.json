@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^docker compose -f docker-compose\\.local\\.yml logs --tail=120 docling-api$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

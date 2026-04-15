@@ -72,6 +72,13 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -F "file=@./Beyond RAG for Agent Memory- Retrieval by Decoupling and Aggregation.pdf"
 ```
 
+If you are calling the local gateway and `API_KEYS=` is empty in `.env`, you can omit the auth header:
+
+```bash
+curl -X POST "http://127.0.0.1:18080/v1/convert" \
+  -F "file=@./Beyond RAG for Agent Memory- Retrieval by Decoupling and Aggregation.pdf"
+```
+
 Default response format:
 
 ```json
@@ -88,6 +95,27 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert?response_format=zip" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf" \
   -o paper.zip
+```
+
+If you want to save the returned Markdown directly to a file, this pattern is safer than piping straight into a target file because it avoids leaving an empty output file behind when the request is interrupted:
+
+```bash
+curl -fsS -X POST "http://127.0.0.1:18080/v1/convert" \
+  -F "file=@/home/justin/docling_file/input/2604.pdf" \
+  -o /tmp/2604_response.json
+
+jq -er '.markdown' /tmp/2604_response.json \
+  > /home/justin/docling_file/input/2604.md
+```
+
+You can also convert a host file path from the mounted `input/` directory without uploading the file body:
+
+```bash
+curl -fsS -X POST "http://127.0.0.1:18080/v1/convert" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_url": "/home/justin/docling_file/input/2604.pdf"
+  }'
 ```
 
 ## Local Deployment
@@ -123,6 +151,14 @@ Use a high-entropy string for `API_KEYS`, for example:
 openssl rand -hex 32
 ```
 
+If you want to disable application-layer API key auth for local testing, you can leave it empty:
+
+```dotenv
+API_KEYS=
+```
+
+When you change `API_KEYS`, you must recreate the `docling-api` container before the change takes effect.
+
 ### 2. Start the Local API and Gateway
 
 ```bash
@@ -135,6 +171,12 @@ If you want GPU mode, use:
 
 ```bash
 docker compose -f docker-compose.local.yml -f docker-compose.gpu.yml up -d --build
+```
+
+If you are switching an existing CPU container back to GPU mode, do not restart with `docker-compose.local.yml` alone. Recreate the service with the GPU override, otherwise Docker will start the container without GPU device requests and Docling will fall back to CPU:
+
+```bash
+docker compose -f docker-compose.local.yml -f docker-compose.gpu.yml up -d --force-recreate docling-api gateway
 ```
 
 After startup:
@@ -209,6 +251,12 @@ docker compose -f docker-compose.local.yml -f docker-compose.gpu.yml down
 docker compose -f docker-compose.local.yml -f docker-compose.gpu.yml up -d --build
 ```
 
+If the service is already running and you only want to switch it from CPU mode to GPU mode, this recreate command is usually enough:
+
+```bash
+docker compose -f docker-compose.local.yml -f docker-compose.gpu.yml up -d --force-recreate docling-api gateway
+```
+
 ### What GPU Mode Changes
 
 In GPU mode, the service will:
@@ -237,6 +285,14 @@ print('cuda_available=', torch.cuda.is_available())
 print('device_count=', torch.cuda.device_count())
 PY
 ```
+
+If `torch.cuda.is_available()` is `False` even though your host GPU works, the most common cause is that the container was started without the GPU override file. You can confirm that the running container has a GPU request with:
+
+```bash
+docker inspect docling_file-docling-api-1 --format '{{json .HostConfig.DeviceRequests}}'
+```
+
+In GPU mode this should not be `null`.
 
 ### Notes
 
@@ -369,6 +425,8 @@ Example:
 ```text
 team-a-key,team-b-key
 ```
+
+If `API_KEYS` is empty, the API accepts requests without `Authorization` or `X-API-Key`. This is convenient for local testing, but it should not be used for an internet-exposed deployment.
 
 Clients can send either:
 
@@ -566,10 +624,12 @@ curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
 ### curl: Upload a Local PDF
 
 ```bash
-curl -X POST "https://docling.itr-lab.cloud/v1/convert" \
+curl -fsS -X POST "https://docling.itr-lab.cloud/v1/convert" \
   -H "Authorization: Bearer <your-api-key>" \
   -F "file=@./paper.pdf" \
-  | jq -r '.markdown' > paper.md
+  -o /tmp/paper_response.json
+
+jq -er '.markdown' /tmp/paper_response.json > paper.md
 ```
 
 ### curl: Download the ZIP Package
@@ -689,7 +749,9 @@ The current version is intentionally a minimal synchronous API so you can get a 
 
 - `container/app/main.py`: FastAPI + Docling conversion logic
 - `Dockerfile`: local Docling service image
-- `docker-compose.local.yml`: local API, Nginx, and cloudflared orchestration
+- `Dockerfile.gpu`: GPU-enabled Docling service image
+- `docker-compose.local.yml`: local API, Nginx, and token-based `cloudflared` profile orchestration
+- `docker-compose.gpu.yml`: GPU override for the Docling API container
 - `deploy/nginx/default.conf`: local reverse proxy configuration
 - `cloudflared/config.yml.example`: example config for a named tunnel
 - `.env.example`: environment variable template for local runtime
