@@ -402,7 +402,7 @@ ls -l /home/justin/.cloudflared
 
 ## API Keys
 
-本地部署不再依賴 Wrangler secret，而是直接從環境變數讀取：
+本地部署直接從環境變數讀取 API key：
 
 ```dotenv
 API_KEYS=team-a-key,team-b-key
@@ -730,7 +730,7 @@ print("saved:", "paper.md")
 1. API 接收請求
 2. 檔案存到物件儲存
 3. 任務寫入佇列
-4. 後端 worker 非同步處理轉換
+4. 後端背景處理程序非同步執行轉換
 5. 結果寫回 R2 或 D1
 
 目前版本刻意保持為最小可用的同步 API，先以跑通部署為主。

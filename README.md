@@ -430,7 +430,7 @@ Keep `API_KEYS` enabled at the application layer as well, so requests still requ
 
 ## API Keys
 
-The local deployment no longer depends on Wrangler secrets. It reads keys directly from environment variables:
+The local deployment reads keys directly from environment variables:
 
 ```dotenv
 API_KEYS=team-a-key,team-b-key
@@ -760,7 +760,7 @@ If concurrency increases later, the recommended direction is:
 1. The API accepts the request
 2. The file is stored in object storage
 3. A job is written to a queue
-4. A backend worker processes the conversion asynchronously
+4. A backend background processor handles the conversion asynchronously
 5. The result is written back to R2 or D1
 
 The current version is intentionally a minimal synchronous API so you can get a working deployment first.
