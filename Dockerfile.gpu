@@ -15,7 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY container/requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
-RUN pip install --index-url https://download.pytorch.org/whl/cu124 torch torchvision torchaudio
+RUN pip install --index-url https://download.pytorch.org/whl/cu124 \
+    torch==2.6.0+cu124 \
+    torchvision==0.21.0+cu124
 
 COPY container/app /app/app
 

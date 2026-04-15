@@ -21,6 +21,16 @@ Client
 
 ## Available Endpoints
 
+### `GET /`
+
+Serves the built-in browser UI for one-off conversions. The page supports:
+
+1. Uploading a PDF file
+2. Submitting a PDF URL
+3. Downloading Markdown with embedded base64 images
+4. Downloading a ZIP package with extracted images
+5. Entering an API key when the deployment keeps `API_KEYS` enabled
+
 ### `GET /health`
 
 Checks whether the container service is available.
@@ -189,6 +199,14 @@ You can verify locally first:
 ```bash
 curl http://127.0.0.1:18080/health
 ```
+
+Open the browser UI locally at:
+
+```text
+http://127.0.0.1:18080/
+```
+
+If `API_KEYS` is enabled, paste a valid key into the `API key` field before converting.
 
 ### 3. Handle Local PDF Files
 
@@ -610,6 +628,8 @@ docker compose \
 
 The following examples are suitable for third-party callers.
 
+If you only need a manual conversion flow, you can also use the built-in browser UI at `/` instead of calling the API directly.
+
 ### curl: Send a PDF URL
 
 ```bash
@@ -731,7 +751,7 @@ Use both edge-level and application-level authentication. That is safer than rel
 
 ### 3. Prefer URLs Over Large File Uploads
 
-If your PDFs are large, it is better to upload them to R2 or another object store first, then pass the accessible URL to `/v1/convert`. That is more stable than routing large uploads through a Worker or tunnel edge path.
+If your PDFs are large, it is better to upload them to R2 or another object store first, then pass the accessible URL to `/v1/convert`. That is more stable than routing large uploads through the tunnel path.
 
 ### 4. Move to Async Processing When Traffic Grows
 
@@ -748,6 +768,7 @@ The current version is intentionally a minimal synchronous API so you can get a 
 ## Key Files
 
 - `container/app/main.py`: FastAPI + Docling conversion logic
+- `container/app/app_shell.py`: built-in browser UI served directly by FastAPI
 - `Dockerfile`: local Docling service image
 - `Dockerfile.gpu`: GPU-enabled Docling service image
 - `docker-compose.local.yml`: local API, Nginx, and token-based `cloudflared` profile orchestration

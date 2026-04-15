@@ -19,7 +19,9 @@ from docling.pipeline.threaded_standard_pdf_pipeline import ThreadedStandardPdfP
 from docling_core.types.doc.base import ImageRefMode
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
+
+from app.app_shell import render_app_html
 
 
 app = FastAPI(
@@ -251,13 +253,9 @@ def require_api_key(request: Request) -> None:
         )
 
 
-@app.get("/")
-def root() -> dict[str, str]:
-    return {
-        "service": "docling-container",
-        "health": "/health",
-        "convert": "/v1/convert"
-    }
+@app.get("/", response_class=HTMLResponse)
+def root() -> str:
+    return render_app_html(auth_enabled=bool(get_api_keys()))
 
 
 @app.get("/health")

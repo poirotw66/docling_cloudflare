@@ -21,6 +21,16 @@ Client
 
 ## 提供的介面
 
+### `GET /`
+
+提供內建的瀏覽器前端介面，適合手動操作單次轉換。頁面支援：
+
+1. 上傳 PDF 檔案
+2. 輸入 PDF 網址
+3. 下載含 base64 圖片的 Markdown
+4. 下載包含 Markdown 與圖片的 ZIP 檔
+5. 後端保留 `API_KEYS` 時，可直接在頁面輸入 API key
+
 ### `GET /health`
 
 檢查容器服務是否可用。
@@ -175,6 +185,14 @@ docker compose -f docker-compose.local.yml -f docker-compose.gpu.yml up -d --bui
 ```bash
 curl http://127.0.0.1:18080/health
 ```
+
+本地瀏覽器前端入口：
+
+```text
+http://127.0.0.1:18080/
+```
+
+如果後端啟用了 `API_KEYS`，先在頁面的 `API key` 欄位貼上有效金鑰，再開始轉換。
 
 ### 3. 處理本地 PDF 檔案
 
@@ -580,6 +598,8 @@ docker compose \
 
 以下範例適合直接提供給第三方呼叫端。
 
+如果你只是要手動操作單次轉換，也可以直接使用 `/` 提供的內建瀏覽器介面，不一定要自行呼叫 API。
+
 ### curl：傳入 PDF URL
 
 ```bash
@@ -701,7 +721,7 @@ print("saved:", "paper.md")
 
 ### 3. 大檔案優先傳 URL，不要優先直接上傳
 
-如果 PDF 很大，建議先上傳到 R2 或其他物件儲存，再把可存取的 URL 傳給 `/v1/convert`。這會比透過 Worker 或 tunnel 邊緣路徑傳大檔更穩定。
+如果 PDF 很大，建議先上傳到 R2 或其他物件儲存，再把可存取的 URL 傳給 `/v1/convert`。這會比直接透過 tunnel 路徑傳大檔更穩定。
 
 ### 4. 流量成長後改成非同步處理
 
@@ -718,6 +738,7 @@ print("saved:", "paper.md")
 ## 關鍵檔案
 
 - `container/app/main.py`：FastAPI + Docling 轉換邏輯
+- `container/app/app_shell.py`：由 FastAPI 直接提供的內建瀏覽器前端
 - `Dockerfile`：本地 Docling 服務映像檔
 - `Dockerfile.gpu`：啟用 GPU 的 Docling 服務映像檔
 - `docker-compose.local.yml`：本地 API、Nginx，以及 token 模式 `cloudflared` profile 的編排
